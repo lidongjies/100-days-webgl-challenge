@@ -1,177 +1,8 @@
+import { loadOBJ } from "../utils/loaders/objLoader";
+import { deg2rad, generateTangents, getGeometriesExtens } from "../utils/index";
+
 import "reset.css";
-import { deg2rad } from "../math/index";
-
-function parseOBJ(text) {
-  const objPositions = [[0, 0, 0]];
-  const objTexcoords = [[0, 0]];
-  const objNormals = [[0, 0, 0]];
-  const objColors = [[0, 0, 0]];
-
-  const objVertexData = [objPositions, objTexcoords, objNormals, objColors];
-
-  let webglVertexData = [
-    [], // positions
-    [], // texcoords
-    [], // normals
-    [], // colors
-  ];
-
-  const geometries = [];
-  const materialLibs = [];
-  const groups = ["default"];
-  let geometry;
-  let object = "default";
-  let material = "defalut";
-
-  function newGeometry() {
-    if (geometry && geometry.data.position.length) {
-      geometry = undefined;
-    }
-  }
-
-  function setGeometry() {
-    if (!geometry) {
-      const position = [];
-      const normal = [];
-      const texcoord = [];
-      const color = [];
-      webglVertexData = [position, texcoord, normal, color];
-      geometry = {
-        object,
-        material,
-        data: {
-          position,
-          texcoord,
-          normal,
-          color,
-        },
-      };
-      geometries.push(geometry);
-    }
-  }
-
-  function addVertex(vert) {
-    const ptn = vert.split("/");
-    ptn.forEach((objIndexStr, i) => {
-      if (!objIndexStr) {
-        return;
-      }
-      const objIndex = parseInt(objIndexStr);
-      const index = objIndex + (objIndex >= 0 ? 0 : objVertexData[i].length);
-      webglVertexData[i].push(...objVertexData[i][index]);
-      // 如果是位置索引，并解析到了颜色值，将定点颜色值复制到 webgl 顶点颜色中
-      if (i === 0 && objColors.length > 1) {
-        geometry.data.color.push(...objColors[index]);
-      }
-    });
-  }
-
-  function noop() {}
-
-  const keywords = {
-    v(parts) {
-      if (parts.length > 3) {
-        objPositions.push(parts.slice(0, 3).map(parseFloat));
-        objColors.push(parts.slice(3).map(parseFloat));
-      } else {
-        objPositions.push(parts.map(parseFloat));
-      }
-    },
-    vn(parts) {
-      objNormals.push(parts.map(parseFloat));
-    },
-    vt(parts) {
-      // should check for missing v and extra w?
-      objTexcoords.push(parts.map(parseFloat));
-    },
-    f(parts) {
-      setGeometry();
-      const numTriangles = parts.length - 2;
-      for (let tri = 0; tri < numTriangles; ++tri) {
-        addVertex(parts[0]);
-        addVertex(parts[tri + 1]);
-        addVertex(parts[tri + 2]);
-      }
-    },
-    usemtl(parts, unparsedArgs) {
-      material = unparsedArgs;
-      newGeometry();
-    },
-    mtllib(parts, unparsedArgs) {
-      materialLibs.push(unparsedArgs);
-    },
-    o(parts, unparsedArgs) {
-      object = unparsedArgs;
-      newGeometry();
-    },
-    s: noop,
-    g(parts, unparsedArgs) {
-      groups = parts;
-      newGeometry();
-    },
-  };
-
-  const keywordRE = /(\w*)(?: )*(.*)/;
-  const lines = text.split("\n");
-  for (let lineNo = 0; lineNo < lines.length; ++lineNo) {
-    const line = lines[lineNo].trim();
-    if (line === "" || line.startsWith("#")) {
-      continue;
-    }
-    const m = keywordRE.exec(line);
-    if (!m) {
-      continue;
-    }
-    const [, keyword, unparsedArgs] = m;
-    const parts = line.split(/\s+/).slice(1);
-    const handler = keywords[keyword];
-    if (!handler) {
-      console.warn("unhandled keyword:", keyword); // eslint-disable-line no-console
-      continue;
-    }
-    handler(parts, unparsedArgs);
-  }
-
-  return {
-    materialLibs,
-    geometries,
-  };
-}
-
-async function loadOBJ(objFile) {
-  const response = await fetch(objFile);
-  const text = await response.text();
-  return parseOBJ(text);
-}
-
-function getExtents(positions) {
-  const min = positions.slice(0, 3);
-  const max = positions.slice(0, 3);
-  for (let i = 3; i < positions.length; i += 3) {
-    for (let j = 0; j < 3; j++) {
-      const v = positions[i + j];
-      min[j] = Math.min(v, min[j]);
-      max[j] = Math.max(v, max[j]);
-    }
-  }
-  return { min, max };
-}
-
-function getGeometriesExtens(geometries) {
-  return geometries.reduce(
-    ({ min, max }, { data }) => {
-      const minMax = getExtents(data.position);
-      return {
-        min: min.map((min, index) => Math.min(minMax.min[index], min)),
-        max: max.map((max, index) => Math.max(minMax.max[index], max)),
-      };
-    },
-    {
-      min: Array(3).fill(Number.POSITIVE_INFINITY),
-      max: Array(3).fill(Number.NEGATIVE_INFINITY),
-    }
-  );
-}
+import "./index.css";
 
 async function main() {
   const canvas = document.querySelector("#canvas");
@@ -182,54 +13,131 @@ async function main() {
 
   const vs = `
 attribute vec4 a_position;
-attribute vec3 a_normal;
+attribute vec2 a_texcoord;
 attribute vec4 a_color;
+attribute vec3 a_normal;
+attribute vec3 a_tangent;
 
 uniform mat4 u_projection;
 uniform mat4 u_view;
 uniform mat4 u_world;
+uniform vec3 u_viewWorldPosition;
 
 varying vec3 v_normal;
+varying vec3 v_surfaceToView;
 varying vec4 v_color;
+varying vec2 v_texcoord;
+varying vec3 v_tangent;
 
 void main() {
-  gl_Position = u_projection * u_view * u_world * a_position;
-  v_normal = mat3(u_world) * a_normal;
+  vec4 worldPosition = u_world * a_position;
+  gl_Position = u_projection * u_view * worldPosition;
+  v_surfaceToView = u_viewWorldPosition - worldPosition.xyz;
+  
+  mat3 normalMat = mat3(u_world);
+  v_normal = normalize(normalMat * a_normal) ;
+  v_tangent = normalize(normalMat * a_tangent);
+  
+  v_texcoord = a_texcoord;
   v_color = a_color;
+  v_tangent = a_tangent;
 }
   `;
 
   const fs = `
-precision mediump float;
+precision highp float;
 
-varying vec3 v_normal;
 varying vec4 v_color;
+varying vec2 v_texcoord;
+varying vec3 v_normal;
+varying vec3 v_tangent;
+varying vec3 v_surfaceToView;
 
-uniform vec4 u_diffuse;
+uniform vec3 diffuse;
+uniform sampler2D diffuseMap;
+uniform vec3 ambient;
+uniform vec3 emissive;
+uniform vec3 specular;
+uniform sampler2D specularMap;
+uniform float shininess;
+uniform sampler2D normalMap;
+uniform float opacity;
 uniform vec3 u_lightDirection;
+uniform vec3 u_ambientLight;
 
 void main () {
   vec3 normal = normalize(v_normal);
+  vec3 tangent = normalize(v_tangent);
+  vec3 bitangent = normalize(cross(normal, tangent));
+
+  mat3 tbn = mat3(tangent, bitangent, normal);
+  normal = texture2D(normalMap, v_texcoord).rgb * 2. - 1.;
+  normal = normalize(tbn * normal);
+
+  vec3 surfaceToViewDirection = normalize(v_surfaceToView);
+  vec3 halfVector = normalize(u_lightDirection + surfaceToViewDirection);
+
   float fakeLight = dot(u_lightDirection, normal) * .5 + .5;
-  vec4 diffuse = u_diffuse * v_color;
-  gl_FragColor = vec4(diffuse.rgb * fakeLight, diffuse.a);
+
+  float specularLight = clamp(dot(normal, halfVector), 0.0, 1.0);
+  vec4 specularMapColor = texture2D(specularMap, v_texcoord);
+  vec3 effectiveSpecular = specular * specularMapColor.rgb;
+
+  vec4 diffuseMapColor = texture2D(diffuseMap, v_texcoord);
+  vec3 effectiveDiffuse = diffuse * diffuseMapColor.rgb * v_color.rgb;
+  float effectiveOpacity = opacity * diffuseMapColor.a * v_color.a;
+  
+  gl_FragColor = vec4(
+      emissive +
+      ambient * u_ambientLight +
+      effectiveDiffuse * fakeLight +
+      effectiveSpecular * pow(specularLight, shininess),
+      effectiveOpacity);
 }
   `;
 
   const meshProgramInfo = webglUtils.createProgramInfo(gl, [vs, fs]);
-  const objData = await loadOBJ("/assets/models/book/book.obj");
 
-  const bufferInfos = objData.geometries.map(({ data }) => {
+  const objData = await loadOBJ(gl, "/assets/models/windmill/windmill.obj");
+
+  const defaultMaterial = {
+    diffuse: [1, 1, 1],
+    diffuseMap: objData.textures.defaultWhite,
+    normalMap: objData.textures.defaultNormal,
+    ambient: [0, 0, 0],
+    specular: [1, 1, 1],
+    specularMap: objData.textures.defaultWhite,
+    shininess: 400,
+    opacity: 1,
+  };
+
+  // hack the materials so we can see the specular map
+  Object.values(objData.materials).forEach((material) => {
+    material.shininess = 25;
+    material.specular = [3, 2, 1];
+  });
+
+  const bufferInfos = objData.geometries.map(({ data, material }) => {
     if (data.position.length === data.color.length) {
       data.color = { numComponents: 3, data: data.color };
+    } else if (data.position.length < data.color.length) {
+      data.color = { numComponents: 4, data: data.color };
     } else {
       data.color = { value: [1, 1, 1, 1] };
     }
+
+    if (data.texcoord.length && data.normal.length) {
+      data.tangent = generateTangents(data.position, data.normal);
+    } else {
+      data.tangent = { value: [1, 0, 0] };
+    }
+
     const bufferInfo = webglUtils.createBufferInfoFromArrays(gl, data);
     return {
       bufferInfo,
       material: {
-        u_diffuse: [1, 1, 1, 1],
+        ...defaultMaterial,
+        ...objData.materials[material],
       },
     };
   });
@@ -238,11 +146,10 @@ void main () {
   const range = m4.subtractVectors(extents.max, extents.min);
   const objectOffset = m4.scaleVector(m4.addVectors(extents.min, m4.scaleVector(range, 0.5)), -1);
 
-  const target = [0, 0, 0];
   const up = [0, 1, 0];
-
-  const radius = m4.length(range) * 1.2;
-  const position = m4.addVectors(target, [0, 0, radius]);
+  const target = [0, 0, 0];
+  const radius = m4.length(range) * 0.8;
+  const cameraPosition = m4.addVectors(target, [0, 0, radius]);
   const zNeer = radius / 100;
   const zFar = radius * 3;
 
@@ -252,13 +159,12 @@ void main () {
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
 
     const fieldOfViewRadians = deg2rad(60);
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const projection = m4.perspective(fieldOfViewRadians, aspect, zNeer, zFar);
 
-    const camera = m4.lookAt(position, target, up);
+    const camera = m4.lookAt(cameraPosition, target, up);
     const viewMatrix = m4.inverse(camera);
 
     let u_world = m4.yRotation(time);
@@ -268,6 +174,7 @@ void main () {
       u_lightDirection: m4.normalize([-1, 3, 5]),
       u_view: viewMatrix,
       u_projection: projection,
+      u_viewWorldPosition: cameraPosition,
     };
 
     gl.useProgram(meshProgramInfo.program);
@@ -275,10 +182,13 @@ void main () {
 
     for (const { bufferInfo, material } of bufferInfos) {
       webglUtils.setBuffersAndAttributes(gl, meshProgramInfo, bufferInfo);
-      webglUtils.setUniforms(meshProgramInfo, {
-        u_world,
-        u_diffuse: material.u_diffuse,
-      });
+      webglUtils.setUniforms(
+        meshProgramInfo,
+        {
+          u_world,
+        },
+        material
+      );
       webglUtils.drawBufferInfo(gl, bufferInfo);
     }
 

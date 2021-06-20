@@ -1,5 +1,4 @@
-import * as m4 from "../math/m4.js";
-import { deg2rad, rad2deg } from "../math/index.js";
+import { deg2rad, rad2deg } from "../utils/index.js";
 
 function render() {
   const canvas = document.getElementById("canvas");
