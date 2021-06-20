@@ -6,7 +6,7 @@ export function rad2deg(rad) {
   return (rad * 180) / Math.PI;
 }
 
-function isPowerOf2(value) {
+export function isPowerOf2(value) {
   return (value & (value - 1)) === 0;
 }
 
