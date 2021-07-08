@@ -1,10 +1,11 @@
+// 1. 渲染 cube
+// 2. 渲染到 texture
+// 3. 渲染到 canvas
 import { deg2rad } from "../utils/index";
 
-import "reset.css";
 import "./index.css";
 
 function main() {
-  const canvas = document.getElementById("canvas");
   const gl = canvas.getContext("webgl");
   if (!gl) return;
 
@@ -12,59 +13,67 @@ function main() {
 attribute vec4 a_position;
 attribute vec2 a_texcoord;
 
-uniform mat4 u_matrix;
+uniform mat4 u_projection;
 
 varying vec2 v_texcoord;
 
 void main() {
-  gl_Position = u_matrix * a_position;
+    gl_Position = u_projection * a_position;
 
-  v_texcoord = a_texcoord;
+    v_texcoord = a_texcoord;
 }`;
 
   const fs = `
-precision mediump float;
+precision highp float;
+
+uniform sampler2D u_texture;
+uniform vec4 u_colorMult;
 
 varying vec2 v_texcoord;
 
-uniform sampler2D u_texture;
-
 void main() {
-   gl_FragColor = texture2D(u_texture, v_texcoord);
+    gl_FragColor = texture2D(u_texture, v_texcoord) * u_colorMult;
 }
-  `;
+`;
 
   const programInfo = webglUtils.createProgramInfo(gl, [vs, fs]);
-  const bufferInfo = webglUtils.createBufferInfoFromArrays(gl, {
+  const cubeBufferInfo = webglUtils.createBufferInfoFromArrays(gl, {
     position: setGeometry(),
     texcoord: setTexcoords(),
   });
 
   const texture = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  const level = 0;
-  const internalFormat = gl.LUMINANCE;
-  const width = 3;
-  const height = 2;
-  const border = 0;
-  const format = gl.LUMINANCE;
-  const type = gl.UNSIGNED_BYTE;
-  const data = new Uint8Array([128, 64, 128, 0, 192, 0]);
-  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, format, type, data);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  {
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.LUMINANCE,
+      3,
+      2,
+      0,
+      gl.LUMINANCE,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array([128, 64, 128, 0, 192, 0])
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  }
+
+  function drawCube() {}
+
+  const fieldOfViewRadians = deg2rad(60);
+  const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+  var cameraPosition = [0, 0, 2];
+  var up = [0, 1, 0];
+  var target = [0, 0, 0];
 
   let then = 0;
   let modelXRotationRadians = deg2rad(0);
   let modelYRotationRadians = deg2rad(0);
-
-  let fieldOfViewRadians = deg2rad(60);
-  const target = [0, 0, 0];
-  const up = [0, 1, 0];
-  const cameraPosition = [0, 0, 2];
 
   function render(time) {
     time *= 0.001;
@@ -78,27 +87,27 @@ void main() {
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.useProgram(programInfo.program);
 
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    const projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
-    const cameraMatrix = m4.lookAt(cameraPosition, target, up);
-    const viewMatrix = m4.inverse(cameraMatrix);
-    const viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
+    var projectionMatrix = m4.perspective(fieldOfViewRadians, aspect, 1, 2000);
+    var cameraMatrix = m4.lookAt(cameraPosition, target, up);
+    var viewMatrix = m4.inverse(cameraMatrix);
+    var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
     let matrix = m4.yRotate(viewProjectionMatrix, modelYRotationRadians);
     matrix = m4.xRotate(matrix, modelXRotationRadians);
 
+    gl.useProgram(programInfo.program);
     webglUtils.setUniforms(programInfo, {
+      u_projection: matrix,
       u_texture: texture,
-      u_matrix: matrix,
+      u_colorMult: [0.3, 0.4, 0.2, 1],
     });
-    webglUtils.setBuffersAndAttributes(gl, programInfo, bufferInfo);
-    webglUtils.drawBufferInfo(gl, bufferInfo);
+    webglUtils.setBuffersAndAttributes(gl, programInfo, cubeBufferInfo);
+    webglUtils.drawBufferInfo(gl, cubeBufferInfo);
 
     requestAnimationFrame(render);
   }
 
-  requestAnimationFrame(render);
+  render();
 }
 
 main();
