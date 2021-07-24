@@ -1,0 +1,15 @@
+@import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
+
+body {
+  width: 100vw;
+  height: 100vh;
+  background-color: #666;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+canvas {
+  width: 100vw;
+  height: 100vh;
+  background-color: #fff;
+}
