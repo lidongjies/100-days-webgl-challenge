@@ -1,7 +1,7 @@
 import { deg2rad } from "../utils/index";
 
 import "reset.css";
-import "./index.css";
+import "../styles/index.css";
 
 function main() {
   const canvas = document.getElementById("canvas");

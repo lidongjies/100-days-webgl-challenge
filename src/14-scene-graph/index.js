@@ -1,3 +1,6 @@
+import "reset.css";
+import "../styles/index.css";
+
 class TRS {
   constructor() {
     this.translation = [0, 0, 0];

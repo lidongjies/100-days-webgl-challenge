@@ -3,7 +3,7 @@
 // 3. 渲染到 canvas
 import { deg2rad } from "../utils/index";
 
-import "./index.css";
+import "../styles/index.css";
 
 function main() {
   const gl = canvas.getContext("webgl");

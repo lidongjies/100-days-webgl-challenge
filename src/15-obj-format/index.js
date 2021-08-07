@@ -2,7 +2,7 @@ import { loadOBJ } from "../utils/loaders/objLoader";
 import { deg2rad, generateTangents, getGeometriesExtens } from "../utils/index";
 
 import "reset.css";
-import "./index.css";
+import "../styles/index.css";
 
 async function main() {
   const canvas = document.querySelector("#canvas");

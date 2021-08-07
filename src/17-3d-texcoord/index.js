@@ -1,7 +1,7 @@
 import { deg2rad, create1PixelTexture, isPowerOf2 } from "../utils/index";
 
 import "reset.css";
-import "./index.css";
+import "../styles/index.css";
 
 function createTexture(gl, url) {
   const texture = create1PixelTexture(gl, [128, 192, 255, 255]);

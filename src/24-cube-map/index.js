@@ -1,5 +1,8 @@
 import { deg2rad } from "../utils/index";
 
+import "reset.css";
+import "../styles/index.css";
+
 const vs = `
   attribute vec4 a_position;
 

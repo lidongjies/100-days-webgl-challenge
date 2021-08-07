@@ -1,3 +1,5 @@
+import "reset.css";
+import "../styles/index.css";
 import { deg2rad, rad2deg } from "../utils/index.js";
 
 function render() {

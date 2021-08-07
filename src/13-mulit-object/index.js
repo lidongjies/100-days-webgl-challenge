@@ -1,4 +1,5 @@
-"use strict";
+import "reset.css";
+import "../styles/index.css";
 
 function main() {
   // Get A WebGL context
@@ -12,34 +13,14 @@ function main() {
   // creates buffers with position, normal, texcoord, and vertex color
   // data for primitives by calling gl.createBuffer, gl.bindBuffer,
   // and gl.bufferData
-  const sphereBufferInfo = primitives.createSphereWithVertexColorsBufferInfo(
-    gl,
-    10,
-    12,
-    6
-  );
-  const cubeBufferInfo = primitives.createCubeWithVertexColorsBufferInfo(
-    gl,
-    20
-  );
-  const coneBufferInfo = primitives.createTruncatedConeWithVertexColorsBufferInfo(
-    gl,
-    10,
-    0,
-    20,
-    12,
-    1,
-    true,
-    false
-  );
+  const sphereBufferInfo = primitives.createSphereWithVertexColorsBufferInfo(gl, 10, 12, 6);
+  const cubeBufferInfo = primitives.createCubeWithVertexColorsBufferInfo(gl, 20);
+  const coneBufferInfo = primitives.createTruncatedConeWithVertexColorsBufferInfo(gl, 10, 0, 20, 12, 1, true, false);
 
   var shapes = [sphereBufferInfo, cubeBufferInfo, coneBufferInfo];
 
   // setup GLSL program
-  var programInfo = webglUtils.createProgramInfo(gl, [
-    "vertex-shader-3d",
-    "fragment-shader-3d",
-  ]);
+  var programInfo = webglUtils.createProgramInfo(gl, ["vertex-shader-3d", "fragment-shader-3d"]);
 
   function degToRad(d) {
     return (d * Math.PI) / 180;
@@ -66,9 +47,7 @@ function main() {
   for (var ii = 0; ii < numObjects; ++ii) {
     var object = {
       uniforms: {
-        u_colorMult: chroma
-          .hsv(emod(baseHue + rand(0, 120), 360), rand(0.5, 1), rand(0.5, 1))
-          .gl(),
+        u_colorMult: chroma.hsv(emod(baseHue + rand(0, 120), 360), rand(0.5, 1), rand(0.5, 1)).gl(),
         u_matrix: m4.identity(),
       },
       translation: [rand(-100, 100), rand(-100, 100), rand(-150, -50)],
@@ -83,18 +62,8 @@ function main() {
     });
   }
 
-  function computeMatrix(
-    viewProjectionMatrix,
-    translation,
-    xRotation,
-    yRotation
-  ) {
-    var matrix = m4.translate(
-      viewProjectionMatrix,
-      translation[0],
-      translation[1],
-      translation[2]
-    );
+  function computeMatrix(viewProjectionMatrix, translation, xRotation, yRotation) {
+    var matrix = m4.translate(viewProjectionMatrix, translation[0], translation[1], translation[2]);
     matrix = m4.xRotate(matrix, xRotation);
     return m4.yRotate(matrix, yRotation);
   }

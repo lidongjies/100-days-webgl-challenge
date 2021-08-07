@@ -1,3 +1,6 @@
+import "reset.css";
+import "../styles/index.css";
+
 function setRectangle(gl, x, y, width, height) {
   const x1 = x;
   const x2 = x + width;

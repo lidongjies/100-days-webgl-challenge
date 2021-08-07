@@ -1,3 +1,6 @@
+import "reset.css";
+import "../styles/index.css";
+
 function main() {
   // Get A WebGL context
   /** @type {HTMLCanvasElement} */

@@ -1,53 +1,70 @@
+import "reset.css";
+import "../styles/index.css";
+
 function render() {
-  const canvas = document.querySelector('#canvas')
-  const gl = canvas.getContext('webgl')
+  const canvas = document.querySelector("#canvas");
+  const gl = canvas.getContext("webgl");
   if (!gl) {
-    return
+    return;
   }
-  const program = webglUtils.createProgramFromScripts(gl, ['2d-vertex-shader', '2d-fragment-shader'])
+  const program = webglUtils.createProgramFromScripts(gl, ["2d-vertex-shader", "2d-fragment-shader"]);
 
   // init
-  const positionLocation = gl.getAttribLocation(program, 'a_position')
-  const resolutionLocation = gl.getUniformLocation(program, 'u_resolution')
-  const matrixLocation = gl.getUniformLocation(program, 'u_matrix')
-  const colorLocation = gl.getUniformLocation(program, 'u_color')
+  const positionLocation = gl.getAttribLocation(program, "a_position");
+  const resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+  const matrixLocation = gl.getUniformLocation(program, "u_matrix");
+  const colorLocation = gl.getUniformLocation(program, "u_color");
 
   const positionBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
-  setGeometry(gl)
-  gl.bindBuffer(gl.ARRAY_BUFFER, null)
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  setGeometry(gl);
+  gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-  const translation = [100, 150]
-  let angleInRadians = 0
-  const scale = [1, 1]
-  const color = [Math.random(), Math.random(), Math.random(), 1]
+  const translation = [100, 150];
+  let angleInRadians = 0;
+  const scale = [1, 1];
+  const color = [Math.random(), Math.random(), Math.random(), 1];
 
-  drawScene()
+  drawScene();
 
-  webglLessonsUI.setupSlider('#x', { value: translation[0], slide: updatePosition(0), max: gl.canvas.width })
-  webglLessonsUI.setupSlider('#y', { value: translation[1], slide: updatePosition(1), max: gl.canvas.height })
-  webglLessonsUI.setupSlider('#angle', { slide: updateAngle, max: 360 })
-  webglLessonsUI.setupSlider('#scaleX', { value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, percision: 2 })
-  webglLessonsUI.setupSlider('#scaleY', { value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, percision: 2 })
+  webglLessonsUI.setupSlider("#x", { value: translation[0], slide: updatePosition(0), max: gl.canvas.width });
+  webglLessonsUI.setupSlider("#y", { value: translation[1], slide: updatePosition(1), max: gl.canvas.height });
+  webglLessonsUI.setupSlider("#angle", { slide: updateAngle, max: 360 });
+  webglLessonsUI.setupSlider("#scaleX", {
+    value: scale[0],
+    slide: updateScale(0),
+    min: -5,
+    max: 5,
+    step: 0.01,
+    percision: 2,
+  });
+  webglLessonsUI.setupSlider("#scaleY", {
+    value: scale[1],
+    slide: updateScale(1),
+    min: -5,
+    max: 5,
+    step: 0.01,
+    percision: 2,
+  });
 
   function updatePosition(index) {
-    return function(event, ui) {
-      translation[index] = ui.value
-      drawScene()
-    }
+    return function (event, ui) {
+      translation[index] = ui.value;
+      drawScene();
+    };
   }
 
   function updateAngle(event, ui) {
-    const angleDgress = 360 - ui.value
-    angleInRadians = angleDgress * Math.PI / 180
-    drawScene()
+    const angleDgress = 360 - ui.value;
+    angleInRadians = (angleDgress * Math.PI) / 180;
+    drawScene();
   }
 
   function updateScale(index) {
-    return function(event, ui) {
-      scale[index] = ui.value
-      drawScene()
-    }
+    return function (event, ui) {
+      scale[index] = ui.value;
+      drawScene();
+    };
   }
 
   function drawScene() {
@@ -69,13 +86,12 @@ function render() {
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
     // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-    var size = 2;          // 2 components per iteration
-    var type = gl.FLOAT;   // the data is 32bit floats
+    var size = 2; // 2 components per iteration
+    var type = gl.FLOAT; // the data is 32bit floats
     var normalize = false; // don't normalize the data
-    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-    var offset = 0;        // start at the beginning of the buffer
-    gl.vertexAttribPointer(
-        positionLocation, size, type, normalize, stride, offset)
+    var stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
+    var offset = 0; // start at the beginning of the buffer
+    gl.vertexAttribPointer(positionLocation, size, type, normalize, stride, offset);
 
     // set the color
     gl.uniform4fv(colorLocation, color);
@@ -92,86 +108,52 @@ function render() {
     // Draw the geometry.
     var primitiveType = gl.TRIANGLES;
     var offset = 0;
-    var count = 18;  // 6 triangles in the 'F', 3 points per triangle
+    var count = 18; // 6 triangles in the 'F', 3 points per triangle
     gl.drawArrays(primitiveType, offset, count);
   }
 
   function setGeometry(gl) {
     gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array([
-            // left column
-            0, 0,
-            30, 0,
-            0, 150,
-            0, 150,
-            30, 0,
-            30, 150,
+      gl.ARRAY_BUFFER,
+      new Float32Array([
+        // left column
+        0, 0, 30, 0, 0, 150, 0, 150, 30, 0, 30, 150,
 
-            // top rung
-            30, 0,
-            100, 0,
-            30, 30,
-            30, 30,
-            100, 0,
-            100, 30,
+        // top rung
+        30, 0, 100, 0, 30, 30, 30, 30, 100, 0, 100, 30,
 
-            // middle rung
-            30, 60,
-            67, 60,
-            30, 90,
-            30, 90,
-            67, 60,
-            67, 90,
-        ]),
-        gl.STATIC_DRAW);
+        // middle rung
+        30, 60, 67, 60, 30, 90, 30, 90, 67, 60, 67, 90,
+      ]),
+      gl.STATIC_DRAW
+    );
   }
 }
 const m3 = {
-  projection: function(width, height) {
+  projection: function (width, height) {
     // Note: This matrix flips the Y axis so that 0 is at the top.
-    return [
-      2 / width, 0, 0,
-      0, -2 / height, 0,
-      -1, 1, 1
-    ];
+    return [2 / width, 0, 0, 0, -2 / height, 0, -1, 1, 1];
   },
 
-  identity: function() {
-    return [
-      1, 0, 0,
-      0, 1, 0,
-      0, 0, 1,
-    ];
+  identity: function () {
+    return [1, 0, 0, 0, 1, 0, 0, 0, 1];
   },
 
-  translation: function(tx, ty) {
-    return [
-      1, 0, 0,
-      0, 1, 0,
-      tx, ty, 1,
-    ];
+  translation: function (tx, ty) {
+    return [1, 0, 0, 0, 1, 0, tx, ty, 1];
   },
 
-  rotation: function(angleInRadians) {
+  rotation: function (angleInRadians) {
     var c = Math.cos(angleInRadians);
     var s = Math.sin(angleInRadians);
-    return [
-      c,-s, 0,
-      s, c, 0,
-      0, 0, 1,
-    ];
+    return [c, -s, 0, s, c, 0, 0, 0, 1];
   },
 
-  scaling: function(sx, sy) {
-    return [
-      sx, 0, 0,
-      0, sy, 0,
-      0, 0, 1,
-    ];
+  scaling: function (sx, sy) {
+    return [sx, 0, 0, 0, sy, 0, 0, 0, 1];
   },
 
-  multiply: function(a, b) {
+  multiply: function (a, b) {
     var a00 = a[0 * 3 + 0];
     var a01 = a[0 * 3 + 1];
     var a02 = a[0 * 3 + 2];
@@ -203,17 +185,17 @@ const m3 = {
     ];
   },
 
-  translate: function(m, tx, ty) {
+  translate: function (m, tx, ty) {
     return m3.multiply(m, m3.translation(tx, ty));
   },
 
-  rotate: function(m, angleInRadians) {
+  rotate: function (m, angleInRadians) {
     return m3.multiply(m, m3.rotation(angleInRadians));
   },
 
-  scale: function(m, sx, sy) {
+  scale: function (m, sx, sy) {
     return m3.multiply(m, m3.scaling(sx, sy));
   },
 };
 
-render()
+render();

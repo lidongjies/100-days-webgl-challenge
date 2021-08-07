@@ -1,3 +1,6 @@
+import "reset.css";
+import "../styles/index.css";
+
 import { deg2rad, rad2deg } from "../utils/index.js";
 
 function render() {
@@ -127,8 +130,7 @@ function render() {
     // normalize = true, 需要标准化数据
     gl.vertexAttribPointer(colorLocation, 3, gl.UNSIGNED_BYTE, true, 0, 0);
 
-    let matrix = m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
-    // find a bug
+    let matrix = m4.orthographic(0, gl.canvas.clientWidth, gl.canvas.clientHeight, 0, 400, -400);
     matrix = m4.translate(matrix, translation[0], translation[1], translation[2]);
     matrix = m4.xRotate(matrix, rotation[0]);
     matrix = m4.yRotate(matrix, rotation[1]);

@@ -1,4 +1,4 @@
-import "./index.css";
+import "../styles/index.css";
 
 const canvas = document.getElementById("canvas");
 const gl = canvas.getContext("webgl");

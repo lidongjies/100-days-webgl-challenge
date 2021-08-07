@@ -1,5 +1,7 @@
-import "./index.css";
 import MatrixStack from "./MatrixStack";
+
+import "reset.css";
+import "../styles/index.css";
 
 let matrixStack = new MatrixStack();
 const canvas = document.getElementById("canvas");
