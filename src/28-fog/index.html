@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>28 fog</title>
+    <style>
+      html,
+      body {
+        width: 100vw;
+        height: 100vh;
+        background: #666;
+      }
+      #canvas {
+        display: block;
+        width: 800px;
+        height: 600px;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <div id="uiContainer">
+      <div id="ui"></div>
+    </div>
+    <!-- vertex shader -->
+    <script id="vertex-shader-3d" type="x-shader/x-vertex">
+      attribute vec4 a_position;
+      attribute vec2 a_texcoord;
+
+      uniform mat4 u_matrix;
+
+      varying vec2 v_texcoord;
+
+      void main() {
+        // Multiply the position by the matrix.
+        gl_Position = u_matrix * a_position;
+
+        // Pass the texcoord to the fragment shader.
+        v_texcoord = a_texcoord;
+      }
+    </script>
+    <!-- fragment shader -->
+    <script id="fragment-shader-3d" type="x-shader/x-fragment">
+      precision mediump float;
+
+      // Passed in from the vertex shader.
+      varying vec2 v_texcoord;
+
+      // The texture.
+      uniform sampler2D u_texture;
+
+      uniform vec4 u_fogColor;
+      uniform float u_fogAmount;
+
+      void main() {
+        vec4 color = texture2D(u_texture, v_texcoord);
+        gl_FragColor = mix(color, u_fogColor, u_fogAmount);
+      }
+    </script>
+    <script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/m4.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/webgl-lessons-ui.js"></script>
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
