@@ -50,7 +50,7 @@ function parseOBJ(text) {
 
   const geometries = [];
   const materialLibs = [];
-  const groups = ["default"];
+  let groups = ["default"];
   let geometry;
   let object = "default";
   let material = "defalut";
