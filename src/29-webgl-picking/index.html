@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>template</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="900" height="600">
+      Your browser doesn't appear to support the HTML5
+      <code>&lt;canvas&gt;</code> element.
+    </canvas>
+    <script id="3d-vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_position;
+      attribute vec4 a_color;
+
+      uniform mat4 u_matrix;
+
+      varying vec4 v_color;
+
+      void main() {
+        v_color = a_color;
+        gl_Position = u_matrix * a_position;
+      }
+    </script>
+    <script id="3d-fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+
+      uniform vec4 u_colorMult;
+
+      varying vec4 v_color;
+
+      void main() {
+        gl_FragColor = v_color * u_colorMult;
+      }
+    </script>
+    <script id="picking-vertex-shader" type="x-type/x-vertex">
+      attribute vec4 a_position;
+
+      uniform mat4 u_matrix;
+
+      void main() {
+        gl_Position = u_matrix * a_position;
+      }
+    </script>
+    <script id="picking-fragment-shader" type="x-type/x-fragment">
+      precision mediump float;
+
+      uniform vec4 u_id;
+
+      void main() {
+        gl_FragColor = u_id;
+      }
+    </script>
+    <script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/m4.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/primitives.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/chroma.min.js"></script>
+    <script type="module" src="index.js"></script>
+  </body>
+</html>
